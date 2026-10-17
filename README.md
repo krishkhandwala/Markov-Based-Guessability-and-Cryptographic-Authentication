@@ -16,7 +16,7 @@ A password strength evaluation and authentication system combining character-lev
 |---|---|---|---|
 | Phase 1: Preprocessing | `1_preprocess.py` | Completed | RockYou cleaning, 80/10/10 split, count tables, top-100k blocklist |
 | Phase 2: Markov Model | `2_markov_model.py` | Completed | n-gram training, Witten-Bell smoothing, Monte Carlo guess estimation |
-| Phase 3: Policy Engine | `3_policy.py` | Next Goal | Tier threshold calibration, blocklist filtering, strength classification |
+| Phase 3: Policy Engine | `3_policy.py` | Completed | Tier threshold calibration, blocklist filtering, strength classification |
 | Phase 4: Cryptographic Auth | `4_crypto.py` | Next Goal | Argon2id hashing, salt management, token issuance |
 | Phase 5: Web API | `5_api.py` | Pending | FastAPI endpoints for password scoring, registration, and login |
 | Phase 6: Benchmarking | `6_benchmark.py` | Pending | Attack simulation and comparison against static entropy metrics |
@@ -76,16 +76,32 @@ Score passwords using the trained model:
 python 2_markov_model.py score model.pkl password P@ssw0rd "xK9#mQ2$vL"
 ```
 
+### 3. Password Policy & Calibration
+
+Evaluate passwords against combined policy (Markov model, blocklist, structure, entropy):
+```bash
+python 3_policy.py evaluate "password" "P@ssw0rd123" "correcthorsebatterystaple"
+```
+
+Output evaluation in JSON format:
+```bash
+python 3_policy.py evaluate --json "P@ssw0rd123"
+```
+
+Calibrate tier distribution and percentiles on validation dataset:
+```bash
+python 3_policy.py calibrate --val data/proto/val_counts.tsv --limit 25000
+```
+
 ## Next Objectives
 
-1. **Threshold Calibration (`3_policy.py`)**:
-   - Evaluate guess-number distribution on validation data to calibrate tier boundaries (`REJECT`, `WEAK`, `ACCEPT`, `STRONG`).
-   - Integrate `blocklist_top100k.txt` filtering.
-2. **Argon2id Authentication (`4_crypto.py`)**:
-   - Implement password hashing using `argon2-cffi` (RFC 9106 parameter profile).
-   - Add verification routine and secure session token generation via `cryptography`.
-3. **API Implementation (`5_api.py`)**:
-   - Implement endpoints:
-     - `POST /score`: Password evaluation returning log probability and guess estimate.
-     - `POST /register`: Policy check and Argon2id hash storage.
-     - `POST /login`: Authentication against stored hash.
+1. **Argon2id Authentication (`4_crypto.py`)**:
+   - Implement memory-hard password hashing using `argon2-cffi` conforming to RFC 9106.
+   - Implement salt generation, constant-time verification, and session token issuance using `cryptography`.
+2. **API Implementation (`5_api.py`)**:
+   - Expose endpoints:
+     - `POST /score`: Password evaluation returning log probability, guess estimate, and tier feedback.
+     - `POST /register`: Policy verification and Argon2id hash creation.
+     - `POST /login`: Authentication against stored Argon2id hash.
+3. **Attack Benchmarking (`6_benchmark.py`)**:
+   - Benchmark Markov-guided attack simulation against brute-force and dictionary search.
