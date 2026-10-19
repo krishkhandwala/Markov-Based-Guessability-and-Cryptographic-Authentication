@@ -4,3 +4,5 @@ model.pkl
 __pycache__/
 *.pyc
 .DS_Store
+cert.pem
+key.pem
