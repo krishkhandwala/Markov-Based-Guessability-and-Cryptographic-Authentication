@@ -2,7 +2,7 @@
 
 A password strength evaluation and authentication system combining character-level Markov models for guessability estimation with Argon2id cryptographic storage.
 
-## Architecture
+## architecture
 
 1. **Preprocessing (`1_preprocess.py`)**: Filters raw password datasets (printable ASCII, lengths 4-32), performs deterministic train/validation/test splits (80/10/10), and extracts frequent-password blocklists.
 2. **Guessability Engine (`2_markov_model.py`)**: Character n-gram Markov chain with Witten-Bell smoothing and Monte Carlo estimation (Dell'Amico & Filippone, 2015) to calculate log-probabilities and expected guess numbers.
