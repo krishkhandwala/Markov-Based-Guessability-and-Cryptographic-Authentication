@@ -95,9 +95,12 @@ class PasswordPolicy:
             self.blocklist = {line.strip().lower() for line in f if line.strip()}
 
     def load_markov_model(self, path: str) -> None:
-        """Dynamically loads MarkovModel from 2_markov_model.py."""
+        """Dynamically loads MarkovModel from markov_model.py or 2_markov_model.py."""
         try:
-            markov_module = importlib.import_module("2_markov_model")
+            try:
+                markov_module = importlib.import_module("markov_model")
+            except ImportError:
+                markov_module = importlib.import_module("2_markov_model")
             self.model = markov_module.load_model(path)
         except Exception as e:
             raise RuntimeError(f"Failed to load Markov model from {path}: {e}")
@@ -238,6 +241,29 @@ class PasswordPolicy:
             violations=violations,
             feedback=feedback,
         )
+
+    def check(self, password: str, username: Optional[str] = None):
+        """Compatibility wrapper returning an object with .accepted and .feedback."""
+        res = self.evaluate(password)
+        feedback = list(res.violations) + list(res.feedback)
+        accepted = res.is_acceptable
+
+        # Username substring check
+        if username and len(username) >= 3 and username.lower() in password.lower():
+            accepted = False
+            feedback.insert(0, "Password must not contain the username.")
+
+        class Decision:
+            def __init__(self, accepted, feedback, result):
+                self.accepted = accepted
+                self.feedback = feedback
+                self.result = result
+
+        return Decision(accepted, feedback, res)
+
+
+# Alias PasswordPolicy as PolicyEngine for backwards compatibility with server.py
+PolicyEngine = PasswordPolicy
 
 
 def calibrate_on_dataset(
